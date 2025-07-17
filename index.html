@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Climb Power Calculator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 900px;
+      margin: auto;
+      padding: 2rem;
+    }
+
+    h1, h2 {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.2rem;
+    }
+
+    .result {
+      margin-top: 2rem;
+      background: #f0f0f0;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+
+    canvas {
+      max-width: 100%;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Climb Power Calculator</h1>
+
+  <div class="grid">
+    <label>Elevation Gain (m): <input type="number" id="elev" value="919"></label>
+    <label>Distance (km): <input type="number" id="dist" value="12.2"></label>
+    <label>Time - Minutes: <input type="number" id="min" value="33"></label>
+    <label>Time - Seconds: <input type="number" id="sec" value="32"></label>
+    <label>Body Weight (kg): <input type="number" id="body" value="62"></label>
+    <label>Bike + Gear Weight (kg): <input type="number" id="gear" value="8"></label>
+  </div>
+
+  <hr style="margin: 2rem 0;">
+
+  <h2>Coefficients</h2>
+  <label>Preset:
+    <select id="preset" onchange="setPreset()">
+      <option value="default">Default (road bike)</option>
+      <option value="tdf">Tour de France (climbing pro)</option>
+      <option value="aero">Aero setup (TT bike)</option>
+      <option value="mtb">MTB or gravel</option>
+      <option value="custom">Custom</option>
+    </select>
+  </label>
+
+  <div class="grid">
+    <label>Drag Coefficient × Area (CdA): <input type="number" id="cda" value="0.35" step="0.01"></label>
+    <label>Rolling Resistance Coefficient (Crr): <input type="number" id="crr" value="0.004" step="0.001"></label>
+    <label>Mechanical Efficiency (0–1): <input type="number" id="eta" value="0.97" step="0.01"></label>
+  </div>
+
+  <button onclick="calculate()" style="margin-top: 2rem; padding: 0.5rem 1rem;">Calculate</button>
+
+  <div class="result" id="output"></div>
+
+  <canvas id="barChart" height="150"></canvas>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    let chart;
+
+    function setPreset() {
+      const preset = document.getElementById("preset").value;
+      const cda = document.getElementById("cda");
+      const crr = document.getElementById("crr");
+      const eta = document.getElementById("eta");
+
+      if (preset === "default") {
+        cda.value = 0.35;
+        crr.value = 0.004;
+        eta.value = 0.97;
+      } else if (preset === "tdf") {
+        cda.value = 0.30;
+        crr.value = 0.004;
+        eta.value = 0.98;
+      } else if (preset === "aero") {
+        cda.value = 0.25;
+        crr.value = 0.003;
+        eta.value = 0.98;
+      } else if (preset === "mtb") {
+        cda.value = 0.45;
+        crr.value = 0.008;
+        eta.value = 0.96;
+      }
+    }
+
+    function calculate() {
+      const g = 9.81;
+      const rho = 1.2;
+
+      const elev = +document.getElementById("elev").value;
+      const dist = +document.getElementById("dist").value * 1000;
+      const time = +document.getElementById("min").value * 60 + +document.getElementById("sec").value;
+      const body = +document.getElementById("body").value;
+      const gear = +document.getElementById("gear").value;
+      const cda = +document.getElementById("cda").value;
+      const crr = +document.getElementById("crr").value;
+      const eta = +document.getElementById("eta").value;
+
+      const mass = body + gear;
+      const speed = dist / time;
+
+      const P_gravity = (mass * g * elev) / time;
+      const P_rolling = (mass * g * crr * dist) / time;
+      const P_aero = 0.5 * rho * cda * speed ** 3;
+
+      const P_mech_input = P_gravity + P_rolling + P_aero;
+      const P_total = P_mech_input / eta;
+      const P_mech_loss = P_total - P_mech_input;
+      const w_per_kg = P_total / body;
+
+      document.getElementById("output").innerHTML = `
+        <p><strong>Average Speed:</strong> ${(speed * 3.6).toFixed(1)} km/h</p>
+        <p><strong>Total Power:</strong> ${P_total.toFixed(1)} W</p>
+        <p><strong>W/kg:</strong> ${w_per_kg.toFixed(2)}</p>
+        <hr>
+        <p><strong>Power Breakdown:</strong></p>
+        <ul>
+          <li>Gravity: ${P_gravity.toFixed(1)} W</li>
+          <li>Rolling Resistance: ${P_rolling.toFixed(1)} W</li>
+          <li>Air Drag: ${P_aero.toFixed(1)} W</li>
+          <li>Mechanical Loss: ${P_mech_loss.toFixed(1)} W</li>
+        </ul>
+      `;
+
+      updateChart([P_gravity, P_rolling, P_aero, P_mech_loss]);
+    }
+
+    function updateChart(values) {
+      const ctx = document.getElementById("barChart").getContext("2d");
+
+      if (chart) {
+        chart.data.datasets[0].data = values;
+        chart.update();
+        return;
+      }
+
+      chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Gravity", "Rolling", "Air Drag", "Mech. Loss"],
+          datasets: [{
+            label: "Power (W)",
+            data: values,
+            backgroundColor: ["#4e79a7", "#f28e2b", "#e15759", "#76b7b2"]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { mode: "index", intersect: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: "Watts"
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
