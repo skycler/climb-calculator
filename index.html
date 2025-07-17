@@ -221,4 +221,54 @@
       const P_aero = 0.5 * rho * cda * speed ** 3;
 
       const P_mech_input = P_gravity + P_rolling + P_aero;
-      const P_total = P
+      const P_total = P_mech_input / eta;
+      const W_per_kg = P_total / body;
+
+      const output = document.getElementById("output");
+      output.textContent = `Estimated Power: ${Math.round(P_total)} W (${W_per_kg.toFixed(2)} W/kg)`;
+    
+      const ctx = document.getElementById("barChart").getContext("2d");
+    
+      if (chart) {
+        chart.destroy();
+      }
+
+  chart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: ["Gravity", "Rolling", "Aerodynamic"],
+      datasets: [{
+        label: "Watts",
+        data: [P_gravity, P_rolling, P_aero],
+        backgroundColor: ["#3b82f6", "#facc15", "#10b981"],
+        borderRadius: 8,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `${context.dataset.label}: ${context.raw.toFixed(1)} W`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Power (W)',
+            font: { weight: 'bold' }
+          }
+        }
+      }
+    }
+  });
+}
+
+calculate(); // Initial calculation
+
