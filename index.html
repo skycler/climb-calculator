@@ -83,7 +83,7 @@
 
   <div class="result" id="output"></div>
 
-  <canvas id="barChart" height="150"></canvas>
+  <canvas id="barChart" height="100"></canvas>
 
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -145,14 +145,6 @@
         <p><strong>Average Speed:</strong> ${(speed * 3.6).toFixed(1)} km/h</p>
         <p><strong>Total Power:</strong> ${P_total.toFixed(1)} W</p>
         <p><strong>W/kg:</strong> ${w_per_kg.toFixed(2)}</p>
-        <hr>
-        <p><strong>Power Breakdown:</strong></p>
-        <ul>
-          <li>Gravity: ${P_gravity.toFixed(1)} W</li>
-          <li>Rolling Resistance: ${P_rolling.toFixed(1)} W</li>
-          <li>Air Drag: ${P_aero.toFixed(1)} W</li>
-          <li>Mechanical Loss: ${P_mech_loss.toFixed(1)} W</li>
-        </ul>
       `;
 
       updateChart([P_gravity, P_rolling, P_aero, P_mech_loss]);
@@ -170,26 +162,47 @@
       chart = new Chart(ctx, {
         type: "bar",
         data: {
-          labels: ["Gravity", "Rolling", "Air Drag", "Mech. Loss"],
-          datasets: [{
-            label: "Power (W)",
-            data: values,
-            backgroundColor: ["#4e79a7", "#f28e2b", "#e15759", "#76b7b2"]
-          }]
+          labels: [""],
+          datasets: [
+            {
+              label: "Gravity",
+              data: [values[0]],
+              backgroundColor: "#4e79a7"
+            },
+            {
+              label: "Rolling Resistance",
+              data: [values[1]],
+              backgroundColor: "#f28e2b"
+            },
+            {
+              label: "Air Drag",
+              data: [values[2]],
+              backgroundColor: "#e15759"
+            },
+            {
+              label: "Mechanical Loss",
+              data: [values[3]],
+              backgroundColor: "#76b7b2"
+            }
+          ]
         },
         options: {
+          indexAxis: "y",
           responsive: true,
           plugins: {
-            legend: { display: false },
-            tooltip: { mode: "index", intersect: false }
+            tooltip: { mode: "index", intersect: false },
+            legend: { position: "bottom" },
           },
           scales: {
-            y: {
-              beginAtZero: true,
+            x: {
+              stacked: true,
               title: {
                 display: true,
                 text: "Watts"
               }
+            },
+            y: {
+              stacked: true
             }
           }
         }
