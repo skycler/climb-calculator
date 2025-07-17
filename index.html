@@ -4,74 +4,47 @@
   <meta charset="UTF-8" />
   <title>Climb Power Calculator</title>
   <style>
-    /* Reset & base */
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
-
+    *, *::before, *::after { box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-      max-width: 720px;
-      margin: 1rem auto;
+      font-family: system-ui, sans-serif;
+      margin: 0 auto;
       padding: 1rem;
+      max-width: 720px;
       background: #f8fafc;
-      color: #222;
-      line-height: 1.5;
-    }
-
-    h1, h2 {
-      font-weight: 600;
-      margin-bottom: 1rem;
       color: #1f2937;
-      text-align: center;
     }
-
+    h1 { text-align: center; margin-bottom: 1rem; font-size: 1.8rem; }
     .card {
       background: #fff;
       border-radius: 12px;
-      box-shadow: 0 8px 20px rgb(0 0 0 / 0.07);
-      padding: 1.5rem 2rem;
-      margin-bottom: 2rem;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
     }
-
     .grid {
       display: grid;
-      gap: 1rem 1.5rem;
+      gap: 1rem;
     }
-
-    /* 2 columns on desktop, 1 column on mobile */
     @media (min-width: 480px) {
-      .grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
+      .grid { grid-template-columns: repeat(2, 1fr); }
     }
-
     label {
       display: flex;
       flex-direction: column;
       font-weight: 500;
-      font-size: 0.9rem;
-      color: #374151;
     }
-
-    input[type="number"],
-    select {
+    input, select {
       margin-top: 0.4rem;
       padding: 0.6rem 0.75rem;
       border: 1.5px solid #d1d5db;
       border-radius: 8px;
       font-size: 1rem;
-      transition: border-color 0.3s ease;
     }
-
-    input[type="number"]:focus,
-    select:focus {
+    input:focus, select:focus {
       outline: none;
       border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgb(59 130 246 / 0.3);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.3);
     }
-
     button {
       background: #2563eb;
       color: white;
@@ -84,15 +57,12 @@
       display: block;
       width: 100%;
       max-width: 280px;
-      margin: 0 auto;
-      box-shadow: 0 6px 15px rgb(37 99 235 / 0.4);
-      transition: background-color 0.25s ease;
+      margin: 1rem auto;
+      box-shadow: 0 6px 15px rgba(37,99,235,0.4);
     }
-
     button:hover {
       background: #1d4ed8;
     }
-
     .result {
       background: #e0e7ff;
       border-radius: 10px;
@@ -101,46 +71,44 @@
       font-weight: 600;
       color: #1e40af;
       text-align: center;
-      user-select: none;
-      box-shadow: 0 6px 12px rgb(59 130 246 / 0.2);
+      margin-top: 1rem;
     }
-
     canvas {
-      margin-top: 2rem;
+      margin-top: 1.5rem;
       max-width: 100%;
       border-radius: 12px;
-      box-shadow: 0 8px 18px rgb(0 0 0 / 0.1);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.1);
     }
   </style>
 </head>
 <body>
   <h1>Climb Power Calculator</h1>
 
-  <section class="card" aria-label="Climb Inputs">
+  <section class="card">
     <div class="grid">
-      <label for="elev">Elevation Gain (m)
-        <input type="number" id="elev" value="919" min="0" />
+      <label>Elevation Gain (m)
+        <input type="number" id="elev" value="919" min="0">
       </label>
-      <label for="dist">Distance (km)
-        <input type="number" id="dist" value="12.2" min="0" step="0.1" />
+      <label>Distance (km)
+        <input type="number" id="dist" value="12.2" min="0" step="0.1">
       </label>
-      <label for="min">Time - Minutes
-        <input type="number" id="min" value="33" min="0" />
+      <label>Time – Minutes
+        <input type="number" id="min" value="33" min="0">
       </label>
-      <label for="sec">Time - Seconds
-        <input type="number" id="sec" value="32" min="0" max="59" />
+      <label>Time – Seconds
+        <input type="number" id="sec" value="32" min="0" max="59">
       </label>
-      <label for="body">Body Weight (kg)
-        <input type="number" id="body" value="62" min="1" step="0.1" />
+      <label>Body Weight (kg)
+        <input type="number" id="body" value="62" min="1" step="0.1">
       </label>
-      <label for="gear">Bike + Gear Weight (kg)
-        <input type="number" id="gear" value="8" min="0" step="0.1" />
+      <label>Bike + Gear Weight (kg)
+        <input type="number" id="gear" value="8" min="0" step="0.1">
       </label>
     </div>
   </section>
 
-  <section class="card" aria-label="Coefficient Presets and Custom Inputs">
-    <label for="preset">Preset
+  <section class="card">
+    <label>Preset
       <select id="preset" onchange="setPreset()">
         <option value="default">Default (road bike)</option>
         <option value="aero">Aero setup (TT bike)</option>
@@ -150,60 +118,42 @@
       </select>
     </label>
 
-    <div class="grid" style="margin-top:1rem;">
-      <label for="cda">Drag Coefficient × Area (CdA)
-        <input type="number" id="cda" value="0.35" step="0.01" min="0" />
+    <div class="grid" style="margin-top: 1rem;">
+      <label>Drag Area (CdA)
+        <input type="number" id="cda" value="0.35" step="0.01" min="0">
       </label>
-      <label for="crr">Rolling Resistance Coefficient (Crr)
-        <input type="number" id="crr" value="0.004" step="0.001" min="0" />
+      <label>Rolling Resistance (Crr)
+        <input type="number" id="crr" value="0.004" step="0.001" min="0">
       </label>
-      <label for="eta">Mechanical Efficiency (0–1)
-        <input type="number" id="eta" value="0.97" step="0.01" min="0" max="1" />
+      <label>Mechanical Efficiency (0–1)
+        <input type="number" id="eta" value="0.97" step="0.01" min="0" max="1">
       </label>
     </div>
   </section>
 
-  <button onclick="calculate()" aria-label="Calculate power output and watts per kg">Calculate</button>
+  <button onclick="calculate()">Calculate</button>
 
-  <div class="result" id="output" role="region" aria-live="polite" aria-atomic="true"></div>
-
-  <canvas id="barChart" height="100" aria-label="Power breakdown chart"></canvas>
+  <div class="result" id="output"></div>
+  <canvas id="barChart" height="100"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     let chart;
 
     function setPreset() {
-      const preset = document.getElementById("preset").value;
+      const p = document.getElementById("preset").value;
       const cda = document.getElementById("cda");
       const crr = document.getElementById("crr");
       const eta = document.getElementById("eta");
 
-      if (preset === "default") {
-        cda.value = 0.35;
-        crr.value = 0.004;
-        eta.value = 0.97;
-      } else if (preset === "aero") {
-        cda.value = 0.25;
-        crr.value = 0.003;
-        eta.value = 0.98;
-      } else if (preset === "mtb") {
-        cda.value = 0.45;
-        crr.value = 0.008;
-        eta.value = 0.96;
-      } else if (preset === "tdf") {
-        cda.value = 0.30;
-        crr.value = 0.004;
-        eta.value = 0.98;
-      } else if (preset === "custom") {
-        // don't overwrite custom inputs
-      }
+      if (p === "default") { cda.value = 0.35; crr.value = 0.004; eta.value = 0.97; }
+      else if (p === "aero") { cda.value = 0.25; crr.value = 0.003; eta.value = 0.98; }
+      else if (p === "mtb") { cda.value = 0.45; crr.value = 0.008; eta.value = 0.96; }
+      else if (p === "tdf") { cda.value = 0.30; crr.value = 0.004; eta.value = 0.98; }
     }
 
     function calculate() {
-      const g = 9.81;
-      const rho = 1.2;
-
+      const g = 9.81, rho = 1.2;
       const elev = +document.getElementById("elev").value;
       const dist = +document.getElementById("dist").value * 1000;
       const time = +document.getElementById("min").value * 60 + +document.getElementById("sec").value;
@@ -220,55 +170,63 @@
       const P_rolling = (mass * g * crr * dist) / time;
       const P_aero = 0.5 * rho * cda * speed ** 3;
 
-      const P_mech_input = P_gravity + P_rolling + P_aero;
-      const P_total = P_mech_input / eta;
+      const P_mech = P_gravity + P_rolling + P_aero;
+      const P_total = P_mech / eta;
       const W_per_kg = P_total / body;
 
-      const output = document.getElementById("output");
-      output.textContent = `Estimated Power: ${Math.round(P_total)} W (${W_per_kg.toFixed(2)} W/kg)`;
-    
+      document.getElementById("output").textContent =
+        `Power: ${Math.round(P_total)} W (${W_per_kg.toFixed(2)} W/kg)`;
+
       const ctx = document.getElementById("barChart").getContext("2d");
-    
-      if (chart) {
-        chart.destroy();
-      }
+      if (chart) chart.destroy();
 
-  chart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: ["Gravity", "Rolling", "Aerodynamic"],
-      datasets: [{
-        label: "Watts",
-        data: [P_gravity, P_rolling, P_aero],
-        backgroundColor: ["#3b82f6", "#facc15", "#10b981"],
-        borderRadius: 8,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              return `${context.dataset.label}: ${context.raw.toFixed(1)} W`;
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Power Breakdown'],
+          datasets: [
+            {
+              label: 'Gravity',
+              data: [P_gravity],
+              backgroundColor: '#3b82f6'
+            },
+            {
+              label: 'Rolling',
+              data: [P_rolling],
+              backgroundColor: '#facc15'
+            },
+            {
+              label: 'Aerodynamic',
+              data: [P_aero],
+              backgroundColor: '#10b981'
+            },
+            {
+              label: 'Losses',
+              data: [P_total - P_mech],
+              backgroundColor: '#f87171'
             }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.dataset.label}: ${ctx.raw.toFixed(1)} W`
+              }
+            },
+            legend: { position: 'bottom' }
+          },
+          scales: {
+            x: { title: { display: true, text: 'Watts' }, stacked: true },
+            y: { stacked: true }
           }
         }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: {
-            display: true,
-            text: 'Power (W)',
-            font: { weight: 'bold' }
-          }
-        }
-      }
+      });
     }
-  });
-}
 
-calculate(); // Initial calculation
-
+    window.onload = calculate;
+  </script>
+</body>
+</html>
