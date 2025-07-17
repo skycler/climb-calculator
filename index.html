@@ -1,93 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Climb Power Calculator</title>
   <style>
+    /* Reset & base */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: sans-serif;
-      max-width: 900px;
-      margin: auto;
-      padding: 2rem;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      max-width: 720px;
+      margin: 1rem auto;
+      padding: 1rem;
+      background: #f8fafc;
+      color: #222;
+      line-height: 1.5;
     }
 
     h1, h2 {
+      font-weight: 600;
       margin-bottom: 1rem;
+      color: #1f2937;
+      text-align: center;
     }
 
-    label {
-      display: block;
-      margin-top: 1rem;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.2rem;
-    }
-
-    .result {
-      margin-top: 2rem;
-      background: #f0f0f0;
-      padding: 1rem;
-      border-radius: 8px;
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgb(0 0 0 / 0.07);
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1rem;
+      gap: 1rem 1.5rem;
+    }
+
+    /* 2 columns on desktop, 1 column on mobile */
+    @media (min-width: 480px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+
+    input[type="number"],
+    select {
+      margin-top: 0.4rem;
+      padding: 0.6rem 0.75rem;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgb(59 130 246 / 0.3);
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: block;
+      width: 100%;
+      max-width: 280px;
+      margin: 0 auto;
+      box-shadow: 0 6px 15px rgb(37 99 235 / 0.4);
+      transition: background-color 0.25s ease;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .result {
+      background: #e0e7ff;
+      border-radius: 10px;
+      padding: 1.5rem 2rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #1e40af;
+      text-align: center;
+      user-select: none;
+      box-shadow: 0 6px 12px rgb(59 130 246 / 0.2);
     }
 
     canvas {
+      margin-top: 2rem;
       max-width: 100%;
-    }
-
-    @media (max-width: 600px) {
-      body { padding: 1rem; }
+      border-radius: 12px;
+      box-shadow: 0 8px 18px rgb(0 0 0 / 0.1);
     }
   </style>
 </head>
 <body>
   <h1>Climb Power Calculator</h1>
 
-  <div class="grid">
-    <label>Elevation Gain (m): <input type="number" id="elev" value="919"></label>
-    <label>Distance (km): <input type="number" id="dist" value="12.2"></label>
-    <label>Time - Minutes: <input type="number" id="min" value="33"></label>
-    <label>Time - Seconds: <input type="number" id="sec" value="32"></label>
-    <label>Body Weight (kg): <input type="number" id="body" value="62"></label>
-    <label>Bike + Gear Weight (kg): <input type="number" id="gear" value="8"></label>
-  </div>
+  <section class="card" aria-label="Climb Inputs">
+    <div class="grid">
+      <label for="elev">Elevation Gain (m)
+        <input type="number" id="elev" value="919" min="0" />
+      </label>
+      <label for="dist">Distance (km)
+        <input type="number" id="dist" value="12.2" min="0" step="0.1" />
+      </label>
+      <label for="min">Time - Minutes
+        <input type="number" id="min" value="33" min="0" />
+      </label>
+      <label for="sec">Time - Seconds
+        <input type="number" id="sec" value="32" min="0" max="59" />
+      </label>
+      <label for="body">Body Weight (kg)
+        <input type="number" id="body" value="62" min="1" step="0.1" />
+      </label>
+      <label for="gear">Bike + Gear Weight (kg)
+        <input type="number" id="gear" value="8" min="0" step="0.1" />
+      </label>
+    </div>
+  </section>
 
-  <hr style="margin: 2rem 0;">
+  <section class="card" aria-label="Coefficient Presets and Custom Inputs">
+    <label for="preset">Preset
+      <select id="preset" onchange="setPreset()">
+        <option value="default">Default (road bike)</option>
+        <option value="aero">Aero setup (TT bike)</option>
+        <option value="mtb">MTB or gravel</option>
+        <option value="tdf">Tour de France (climbing pro)</option>
+        <option value="custom">Custom</option>
+      </select>
+    </label>
 
-  <h2>Coefficients</h2>
-  <label>Preset:
-    <select id="preset" onchange="setPreset()">
-      <option value="default">Default (road bike)</option>
-      <option value="tdf">Tour de France (climbing pro)</option>
-      <option value="aero">Aero setup (TT bike)</option>
-      <option value="mtb">MTB or gravel</option>
-      <option value="custom">Custom</option>
-    </select>
-  </label>
+    <div class="grid" style="margin-top:1rem;">
+      <label for="cda">Drag Coefficient × Area (CdA)
+        <input type="number" id="cda" value="0.35" step="0.01" min="0" />
+      </label>
+      <label for="crr">Rolling Resistance Coefficient (Crr)
+        <input type="number" id="crr" value="0.004" step="0.001" min="0" />
+      </label>
+      <label for="eta">Mechanical Efficiency (0–1)
+        <input type="number" id="eta" value="0.97" step="0.01" min="0" max="1" />
+      </label>
+    </div>
+  </section>
 
-  <div class="grid">
-    <label>Drag Coefficient × Area (CdA): <input type="number" id="cda" value="0.35" step="0.01"></label>
-    <label>Rolling Resistance Coefficient (Crr): <input type="number" id="crr" value="0.004" step="0.001"></label>
-    <label>Mechanical Efficiency (0–1): <input type="number" id="eta" value="0.97" step="0.01"></label>
-  </div>
+  <button onclick="calculate()" aria-label="Calculate power output and watts per kg">Calculate</button>
 
-  <button onclick="calculate()" style="margin-top: 2rem; padding: 0.5rem 1rem;">Calculate</button>
+  <div class="result" id="output" role="region" aria-live="polite" aria-atomic="true"></div>
 
-  <div class="result" id="output"></div>
+  <canvas id="barChart" height="100" aria-label="Power breakdown chart"></canvas>
 
-  <canvas id="barChart" height="100"></canvas>
-
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <script>
     let chart;
 
@@ -101,10 +183,6 @@
         cda.value = 0.35;
         crr.value = 0.004;
         eta.value = 0.97;
-      } else if (preset === "tdf") {
-        cda.value = 0.30;
-        crr.value = 0.004;
-        eta.value = 0.98;
       } else if (preset === "aero") {
         cda.value = 0.25;
         crr.value = 0.003;
@@ -113,6 +191,12 @@
         cda.value = 0.45;
         crr.value = 0.008;
         eta.value = 0.96;
+      } else if (preset === "tdf") {
+        cda.value = 0.30;
+        crr.value = 0.004;
+        eta.value = 0.98;
+      } else if (preset === "custom") {
+        // don't overwrite custom inputs
       }
     }
 
@@ -137,77 +221,4 @@
       const P_aero = 0.5 * rho * cda * speed ** 3;
 
       const P_mech_input = P_gravity + P_rolling + P_aero;
-      const P_total = P_mech_input / eta;
-      const P_mech_loss = P_total - P_mech_input;
-      const w_per_kg = P_total / body;
-
-      document.getElementById("output").innerHTML = `
-        <p><strong>Average Speed:</strong> ${(speed * 3.6).toFixed(1)} km/h</p>
-        <p><strong>Total Power:</strong> ${P_total.toFixed(1)} W</p>
-        <p><strong>W/kg:</strong> ${w_per_kg.toFixed(2)}</p>
-      `;
-
-      updateChart([P_gravity, P_rolling, P_aero, P_mech_loss]);
-    }
-
-    function updateChart(values) {
-      const ctx = document.getElementById("barChart").getContext("2d");
-
-      if (chart) {
-        chart.data.datasets[0].data = values;
-        chart.update();
-        return;
-      }
-
-      chart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: [""],
-          datasets: [
-            {
-              label: "Gravity",
-              data: [values[0]],
-              backgroundColor: "#4e79a7"
-            },
-            {
-              label: "Rolling Resistance",
-              data: [values[1]],
-              backgroundColor: "#f28e2b"
-            },
-            {
-              label: "Air Drag",
-              data: [values[2]],
-              backgroundColor: "#e15759"
-            },
-            {
-              label: "Mechanical Loss",
-              data: [values[3]],
-              backgroundColor: "#76b7b2"
-            }
-          ]
-        },
-        options: {
-          indexAxis: "y",
-          responsive: true,
-          plugins: {
-            tooltip: { mode: "index", intersect: false },
-            legend: { position: "bottom" },
-          },
-          scales: {
-            x: {
-              stacked: true,
-              title: {
-                display: true,
-                text: "Watts"
-              }
-            },
-            y: {
-              stacked: true
-            }
-          }
-        }
-      });
-    }
-  </script>
-</body>
-</html>
+      const P_total = P
