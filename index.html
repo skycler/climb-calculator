@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Climb Power Calculator</title>
+  <title>Climbing Power Calculator</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     body {
@@ -20,6 +20,31 @@
       box-shadow: 0 6px 16px rgba(0,0,0,0.06);
       padding: 1.5rem;
       margin-bottom: 1.5rem;
+    }
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #e5e7eb;
+      margin-bottom: 1.5rem;
+    }
+    .tab {
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-weight: 500;
+      color: #6b7280;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      color: #2563eb;
+      border-bottom-color: #2563eb;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
     }
     .grid {
       display: grid;
@@ -86,24 +111,47 @@
 
   <section class="card">
     <div class="grid">
-      <label>Elevation Gain (m)
-        <input type="number" id="elev" value="919" min="0">
-      </label>
-      <label>Distance (km)
-        <input type="number" id="dist" value="12.2" min="0" step="0.1">
-      </label>
-      <label>Time – Minutes
-        <input type="number" id="min" value="33" min="0">
-      </label>
-      <label>Time – Seconds
-        <input type="number" id="sec" value="32" min="0" max="59">
-      </label>
       <label>Body Weight (kg)
         <input type="number" id="body" value="62" min="1" step="0.1">
       </label>
       <label>Bike + Gear Weight (kg)
         <input type="number" id="gear" value="8" min="0" step="0.1">
       </label>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(1)">Distance & Time</button>
+      <button class="tab" onclick="switchTab(2)">Slope & Speed</button>
+    </div>
+
+    <div id="tab1" class="tab-content active">
+      <div class="grid">
+        <label>Elevation Gain (m)
+          <input type="number" id="elev" value="919" min="0">
+        </label>
+        <label>Distance (km)
+          <input type="number" id="dist" value="12.2" min="0" step="0.1">
+        </label>
+        <label>Time – Minutes
+          <input type="number" id="min" value="33" min="0">
+        </label>
+        <label>Time – Seconds
+          <input type="number" id="sec" value="32" min="0" max="59">
+        </label>
+      </div>
+    </div>
+
+    <div id="tab2" class="tab-content">
+      <div class="grid">
+        <label>Hill Slope (%)
+          <input type="number" id="slope" value="7.5" min="0" step="0.1">
+        </label>
+        <label>Riding Speed (km/h)
+          <input type="number" id="speed" value="21.9" min="0" step="0.1">
+        </label>
+      </div>
     </div>
   </section>
 
@@ -139,6 +187,19 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     let chart;
+    let activeTab = 1;
+
+    function switchTab(tabNumber) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab')[tabNumber - 1].classList.add('active');
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(`tab${tabNumber}`).classList.add('active');
+      
+      activeTab = tabNumber;
+    }
 
     function setPreset() {
       const p = document.getElementById("preset").value;
@@ -154,9 +215,6 @@
 
     function calculate() {
       const g = 9.81, rho = 1.2;
-      const elev = +document.getElementById("elev").value;
-      const dist = +document.getElementById("dist").value * 1000;
-      const time = +document.getElementById("min").value * 60 + +document.getElementById("sec").value;
       const body = +document.getElementById("body").value;
       const gear = +document.getElementById("gear").value;
       const cda = +document.getElementById("cda").value;
@@ -164,11 +222,41 @@
       const eta = +document.getElementById("eta").value;
 
       const mass = body + gear;
-      const speed = dist / time;
+      let speed, elev, dist, time;
 
-      const P_gravity = (mass * g * elev) / time;
-      const P_rolling = (mass * g * crr * dist) / time;
-      const P_aero = 0.5 * rho * cda * speed ** 3;
+      if (activeTab === 1) {
+        // Option 1: Calculate from elevation, distance, and time
+        elev = +document.getElementById("elev").value;
+        dist = +document.getElementById("dist").value * 1000; // convert to meters
+        time = +document.getElementById("min").value * 60 + +document.getElementById("sec").value;
+        speed = dist / time; // m/s
+      } else {
+        // Option 2: Calculate from slope and speed
+        const slope = +document.getElementById("slope").value / 100; // convert percentage to decimal
+        const speedKmh = +document.getElementById("speed").value;
+        speed = speedKmh / 3.6; // convert km/h to m/s
+        
+        // For power calculation, we need elevation gain rate
+        // sin(arctan(slope)) ≈ slope for small angles
+        const elevGainRate = speed * slope; // m/s elevation gain
+        elev = elevGainRate; // This will be used as elevation gain per second
+        time = 1; // Calculate power for 1 second
+        dist = speed; // Distance covered in 1 second
+      }
+
+      let P_gravity, P_rolling, P_aero;
+
+      if (activeTab === 1) {
+        P_gravity = (mass * g * elev) / time;
+        P_rolling = (mass * g * crr * dist) / time;
+      } else {
+        // For Option 2: power needed to climb at given slope and speed
+        const slope = +document.getElementById("slope").value / 100;
+        P_gravity = mass * g * speed * slope;
+        P_rolling = mass * g * crr * speed;
+      }
+
+      P_aero = 0.5 * rho * cda * speed ** 3;
 
       const P_mech = P_gravity + P_rolling + P_aero;
       const P_total = P_mech / eta;
@@ -201,7 +289,7 @@
               backgroundColor: '#10b981'
             },
             {
-              label: 'Losses',
+              label: 'Mechanical Losses',
               data: [P_total - P_mech],
               backgroundColor: '#f87171'
             }
